@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aydogduyusuf/DBChain/util"
+	"github.com/aydogduyusuf/DBchain/util"
 	_ "github.com/lib/pq"
 )
 
