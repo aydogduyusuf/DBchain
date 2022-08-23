@@ -1,4 +1,4 @@
-module DBchain
+module github.com/aydogduyusuf/DBchain
 
 go 1.19
 
