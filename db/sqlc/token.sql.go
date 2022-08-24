@@ -11,20 +11,18 @@ import (
 
 const createToken = `-- name: CreateToken :one
 INSERT INTO tokens (
-  id,
   u_id,
   token_name,
   symbol,
   supply,
   contract_address
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4, $5
 )
 RETURNING id, u_id, token_name, symbol, supply, contract_address, create_time, update_time, delete_time, is_active
 `
 
 type CreateTokenParams struct {
-	ID              int64  `json:"id"`
 	UID             int64  `json:"u_id"`
 	TokenName       string `json:"token_name"`
 	Symbol          string `json:"symbol"`
@@ -34,7 +32,6 @@ type CreateTokenParams struct {
 
 func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) (Token, error) {
 	row := q.db.QueryRowContext(ctx, createToken,
-		arg.ID,
 		arg.UID,
 		arg.TokenName,
 		arg.Symbol,
@@ -59,7 +56,7 @@ func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) (Token
 
 const deleteToken = `-- name: DeleteToken :exec
 UPDATE tokens
-SET is_active = false
+SET is_active = false, delete_time = current_timestamp
 WHERE id = $1
 `
 

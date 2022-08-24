@@ -1,6 +1,5 @@
 -- name: CreateUser :one
 INSERT INTO users (
-  id,
   username,
   hashed_password,
   full_name,
@@ -8,7 +7,7 @@ INSERT INTO users (
   wallet_public_address,
   wallet_private_address
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7
+  $1, $2, $3, $4, $5, $6
 )
 RETURNING *;
 
@@ -18,5 +17,5 @@ WHERE username = $1 LIMIT 1;
 
 -- name: DeleteUser :exec
 UPDATE users
-SET status = false
+SET is_active = false AND delete_time = current_timestamp
 WHERE id = $1;

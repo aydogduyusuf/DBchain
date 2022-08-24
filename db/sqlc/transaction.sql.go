@@ -7,7 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createTransaction = `-- name: CreateTransaction :one
@@ -23,11 +22,11 @@ INSERT INTO transactions (
 `
 
 type CreateTransactionParams struct {
-	TransactionType string         `json:"transaction_type"`
-	FromAddress     string         `json:"from_address"`
-	ToAddress       sql.NullString `json:"to_address"`
-	TransferData    string         `json:"transfer_data"`
-	HashValue       string         `json:"hash_value"`
+	TransactionType string `json:"transaction_type"`
+	FromAddress     string `json:"from_address"`
+	ToAddress       string `json:"to_address"`
+	TransferData    string `json:"transfer_data"`
+	HashValue       string `json:"hash_value"`
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
@@ -52,6 +51,17 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.IsActive,
 	)
 	return i, err
+}
+
+const deleteTransaction = `-- name: DeleteTransaction :exec
+UPDATE transactions
+SET is_active = false AND delete_time = current_timestamp
+WHERE id = $1
+`
+
+func (q *Queries) DeleteTransaction(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteTransaction, id)
+	return err
 }
 
 const getTransaction = `-- name: GetTransaction :one
@@ -88,8 +98,8 @@ ORDER BY id
 `
 
 type ListTransactionsParams struct {
-	FromAddress string         `json:"from_address"`
-	ToAddress   sql.NullString `json:"to_address"`
+	FromAddress string `json:"from_address"`
+	ToAddress   string `json:"to_address"`
 }
 
 func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]Transaction, error) {

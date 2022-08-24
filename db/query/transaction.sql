@@ -23,3 +23,8 @@ WHERE
     from_address = $1 OR
     to_address = $2
 ORDER BY id;
+
+-- name: DeleteTransaction :exec
+UPDATE transactions
+SET is_active = false AND delete_time = current_timestamp
+WHERE id = $1;

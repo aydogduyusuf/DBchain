@@ -11,7 +11,6 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-  id,
   username,
   hashed_password,
   full_name,
@@ -19,13 +18,12 @@ INSERT INTO users (
   wallet_public_address,
   wallet_private_address
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7
+  $1, $2, $3, $4, $5, $6
 )
 RETURNING id, username, hashed_password, full_name, email, wallet_public_address, wallet_private_address, create_time, update_time, delete_time, is_active
 `
 
 type CreateUserParams struct {
-	ID                   int64  `json:"id"`
 	Username             string `json:"username"`
 	HashedPassword       string `json:"hashed_password"`
 	FullName             string `json:"full_name"`
@@ -36,7 +34,6 @@ type CreateUserParams struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
-		arg.ID,
 		arg.Username,
 		arg.HashedPassword,
 		arg.FullName,
@@ -63,7 +60,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 
 const deleteUser = `-- name: DeleteUser :exec
 UPDATE users
-SET status = false
+SET is_active = false AND delete_time = current_timestamp
 WHERE id = $1
 `
 

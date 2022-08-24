@@ -1,13 +1,12 @@
 -- name: CreateToken :one
 INSERT INTO tokens (
-  id,
   u_id,
   token_name,
   symbol,
   supply,
   contract_address
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4, $5
 )
 RETURNING *;
 
@@ -33,5 +32,5 @@ RETURNING *;
 
 -- name: DeleteToken :exec
 UPDATE tokens
-SET is_active = false
+SET is_active = false, delete_time = current_timestamp
 WHERE id = $1;

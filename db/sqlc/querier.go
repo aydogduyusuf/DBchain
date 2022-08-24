@@ -13,6 +13,7 @@ type Querier interface {
 	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteToken(ctx context.Context, id int64) error
+	DeleteTransaction(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
 	GetToken(ctx context.Context, id int64) (Token, error)
 	GetTokenForUpdate(ctx context.Context, id int64) (Token, error)
