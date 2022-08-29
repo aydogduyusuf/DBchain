@@ -28,4 +28,7 @@ migrateinit:
 migrate1:
 	migrate create -ext sql -dir db/migration -seq add_session
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc migrateup1 migratedown1 migrateinit migrate1
+mockdb:
+	mockgen -destination db/mock/store.go github.com/aydogduyusuf/DBchain/db/sqlc Store
+
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc migrateup1 migratedown1 migrateinit migrate1 mockdb
