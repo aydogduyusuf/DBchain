@@ -17,7 +17,6 @@ func createRandomToken(t *testing.T) Token{
 		TokenName: 			util.RandomString(6),
 		Symbol: 			util.RandomString(3),
 		Supply: 			util.RandomMoney(),
-		ContractAddress: 	util.RandomString(42),
 	}
 
 	token, err := testQueries.CreateToken(context.Background(), arg) 
@@ -28,7 +27,6 @@ func createRandomToken(t *testing.T) Token{
 	require.Equal(t, arg.TokenName, token.TokenName)
 	require.Equal(t, arg.Symbol, token.Symbol)
 	require.Equal(t, arg.Supply, token.Supply)
-	require.Equal(t, arg.ContractAddress, token.ContractAddress)
 
 	require.NotZero(t, token.ID)
 	require.NotZero(t, token.IsActive)

@@ -6,20 +6,25 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
+	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateToken(ctx context.Context, arg CreateTokenParams) (Token, error)
 	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteToken(ctx context.Context, id int64) error
-	DeleteTransaction(ctx context.Context, id int64) error
-	DeleteUser(ctx context.Context, id int64) error
-	GetToken(ctx context.Context, id int64) (Token, error)
-	GetTokenForUpdate(ctx context.Context, id int64) (Token, error)
-	GetTransaction(ctx context.Context, id int64) (Transaction, error)
+	DeleteToken(ctx context.Context, id uuid.UUID) error
+	DeleteTransaction(ctx context.Context, id uuid.UUID) error
+	DeleteUser(ctx context.Context, id uuid.UUID) error
+	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
+	GetToken(ctx context.Context, id uuid.UUID) (Token, error)
+	GetTokenForUpdate(ctx context.Context, id uuid.UUID) (Token, error)
+	GetTransaction(ctx context.Context, id uuid.UUID) (Transaction, error)
 	GetUser(ctx context.Context, username string) (User, error)
-	ListTokens(ctx context.Context, uID int64) ([]Token, error)
+	GetUserFromID(ctx context.Context, id uuid.UUID) (User, error)
+	ListTokens(ctx context.Context, uID uuid.UUID) ([]Token, error)
 	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]Transaction, error)
 	UpdateToken(ctx context.Context, arg UpdateTokenParams) (Token, error)
 }

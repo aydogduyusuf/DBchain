@@ -15,6 +15,10 @@ RETURNING *;
 SELECT * FROM users
 WHERE username = $1 LIMIT 1;
 
+-- name: GetUserFromID :one
+SELECT * FROM users
+WHERE id = $1 LIMIT 1;
+
 -- name: DeleteUser :exec
 UPDATE users
 SET is_active = false AND delete_time = current_timestamp

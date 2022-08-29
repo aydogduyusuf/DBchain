@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createTransaction = `-- name: CreateTransaction :one
@@ -59,7 +61,7 @@ SET is_active = false AND delete_time = current_timestamp
 WHERE id = $1
 `
 
-func (q *Queries) DeleteTransaction(ctx context.Context, id int64) error {
+func (q *Queries) DeleteTransaction(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteTransaction, id)
 	return err
 }
@@ -71,7 +73,7 @@ WHERE
 LIMIT 1
 `
 
-func (q *Queries) GetTransaction(ctx context.Context, id int64) (Transaction, error) {
+func (q *Queries) GetTransaction(ctx context.Context, id uuid.UUID) (Transaction, error) {
 	row := q.db.QueryRowContext(ctx, getTransaction, id)
 	var i Transaction
 	err := row.Scan(

@@ -3,10 +3,9 @@ INSERT INTO tokens (
   u_id,
   token_name,
   symbol,
-  supply,
-  contract_address
+  supply
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4
 )
 RETURNING *;
 
