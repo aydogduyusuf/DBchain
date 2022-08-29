@@ -7,8 +7,8 @@ import (
 	"github.com/aydogduyusuf/DBchain/access_refresh_tokens"
 	"github.com/aydogduyusuf/DBchain/util"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
+	//"github.com/gin-gonic/gin/binding"
+	//"github.com/go-playground/validator/v10"
 )
 
 // Server serves HTTP requests
@@ -48,12 +48,11 @@ func (server *Server) setupRouter() {
 	router.POST("/users", server.createUser)
 	router.POST("/users/login", server.loginUser)
 
-	authRoutes.POST("/users/tokens", server.deployToken)
+	authRoutes.POST("/tokens", server.deployToken)
 
 	authRoutes.GET("/tokens/:id", server.getToken)
 	authRoutes.GET("/tokens", server.listTokens)
 	
-	authRoutes.POST("/transactions", server.createTransaction)
 	authRoutes.GET("/transactions", server.getTransaction)
 
 	router.POST("/access_refresh_tokens/renew_access", server.renewAccessToken)

@@ -2,16 +2,12 @@ package api
 
 import (
 	"database/sql"
-	"log"
-	"math/big"
 	"net/http"
 	"time"
 
-	"github.com/aydogduyusuf/DBchain/access_refresh_tokens"
 	"github.com/aydogduyusuf/DBchain/blockchain"
 	db "github.com/aydogduyusuf/DBchain/db/sqlc"
 	"github.com/aydogduyusuf/DBchain/util"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
@@ -174,58 +170,3 @@ func (server *Server) loginUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, rsp)
 }
 
-type deployTokenRequest struct {
-	name			string
-	symbol			string
-	supply			int64
-}
-
-type deployTokenResponse struct {
-	TokenAddress		string
-}
-
-func (server *Server) deployToken(ctx *gin.Context) {
-	var req deployTokenRequest
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-	authPayload := ctx.MustGet(authorizationPayloadKey).(*access_refresh_tokens.Payload)
-	arg := db.CreateTokenParams{
-		UID: 				authPayload.ID,
-		TokenName: 			req.name,
-		Symbol: 			req.symbol,
-		Supply: 			req.supply,
-	}
-
-	_, err := server.store.CreateToken(ctx, arg)
-	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			switch pqErr.Code.Name() {
-			case "foreign_key_violation", "unique_violation" : 
-				ctx.JSON(http.StatusForbidden, errorResponse(err))
-			}
-		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	user, err := server.store.GetUserFromID(ctx, authPayload.ID)
-	privateKeyBytes, err := util.Decrypt([]byte(user.WalletPrivateAddress), secretKey)
-	privateKey := string(privateKeyBytes)
-	privateKeyECDSA, err := crypto.HexToECDSA(privateKey)
-	if err != nil {
-		log.Fatal(err)
-	}
-	contractAddress, _ := blockchain.DeployContract(common.BytesToAddress([]byte(user.WalletPublicAddress)), privateKeyECDSA, arg.TokenName, arg.Symbol, big.NewInt(arg.Supply))
-	txArg := db.CreateTransactionParams{
-		TransactionType: "deploy",
-		FromAddress: user.WalletPublicAddress,
-		ToAddress: "",
-		TransferData: contractAddress.String(),
-		HashValue: contractAddress.Hash().String(),
-	}
-	server.store.CreateTransaction(ctx, txArg)
-	ctx.JSON(http.StatusOK, contractAddress)
-}
