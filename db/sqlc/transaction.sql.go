@@ -7,8 +7,7 @@ package db
 
 import (
 	"context"
-
-	"github.com/google/uuid"
+	"time"
 )
 
 const createTransaction = `-- name: CreateTransaction :one
@@ -61,19 +60,18 @@ SET is_active = false AND delete_time = current_timestamp
 WHERE id = $1
 `
 
-func (q *Queries) DeleteTransaction(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) DeleteTransaction(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, deleteTransaction, id)
 	return err
 }
 
 const getTransaction = `-- name: GetTransaction :one
 SELECT id, transaction_type, from_address, to_address, transfer_data, hash_value, create_time, update_time, delete_time, is_active FROM transactions
-WHERE 
-    id = $1
+WHERE id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetTransaction(ctx context.Context, id uuid.UUID) (Transaction, error) {
+func (q *Queries) GetTransaction(ctx context.Context, id int64) (Transaction, error) {
 	row := q.db.QueryRowContext(ctx, getTransaction, id)
 	var i Transaction
 	err := row.Scan(
@@ -91,21 +89,336 @@ func (q *Queries) GetTransaction(ctx context.Context, id uuid.UUID) (Transaction
 	return i, err
 }
 
-const listTransactions = `-- name: ListTransactions :many
+const getTransactionByAddress = `-- name: GetTransactionByAddress :one
+SELECT id, transaction_type, from_address, to_address, transfer_data, hash_value, create_time, update_time, delete_time, is_active FROM transactions
+WHERE transfer_data = $1
+LIMIT 1
+`
+
+func (q *Queries) GetTransactionByAddress(ctx context.Context, transferData string) (Transaction, error) {
+	row := q.db.QueryRowContext(ctx, getTransactionByAddress, transferData)
+	var i Transaction
+	err := row.Scan(
+		&i.ID,
+		&i.TransactionType,
+		&i.FromAddress,
+		&i.ToAddress,
+		&i.TransferData,
+		&i.HashValue,
+		&i.CreateTime,
+		&i.UpdateTime,
+		&i.DeleteTime,
+		&i.IsActive,
+	)
+	return i, err
+}
+
+const listDeploysByTime = `-- name: ListDeploysByTime :many
 SELECT id, transaction_type, from_address, to_address, transfer_data, hash_value, create_time, update_time, delete_time, is_active FROM transactions
 WHERE 
-    from_address = $1 OR
-    to_address = $2
+    create_time >= $1 AND create_time <= $2 AND transaction_type = $3 AND from_address = $4
 ORDER BY id
 `
 
-type ListTransactionsParams struct {
-	FromAddress string `json:"from_address"`
-	ToAddress   string `json:"to_address"`
+type ListDeploysByTimeParams struct {
+	CreateTime      time.Time `json:"create_time"`
+	CreateTime_2    time.Time `json:"create_time_2"`
+	TransactionType string    `json:"transaction_type"`
+	FromAddress     string    `json:"from_address"`
 }
 
-func (q *Queries) ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]Transaction, error) {
-	rows, err := q.db.QueryContext(ctx, listTransactions, arg.FromAddress, arg.ToAddress)
+func (q *Queries) ListDeploysByTime(ctx context.Context, arg ListDeploysByTimeParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listDeploysByTime,
+		arg.CreateTime,
+		arg.CreateTime_2,
+		arg.TransactionType,
+		arg.FromAddress,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Transaction{}
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.TransactionType,
+			&i.FromAddress,
+			&i.ToAddress,
+			&i.TransferData,
+			&i.HashValue,
+			&i.CreateTime,
+			&i.UpdateTime,
+			&i.DeleteTime,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDeploysByUser = `-- name: ListDeploysByUser :many
+SELECT id, transaction_type, from_address, to_address, transfer_data, hash_value, create_time, update_time, delete_time, is_active FROM transactions
+WHERE 
+    from_address = $1 AND transaction_type = $2
+ORDER BY id
+`
+
+type ListDeploysByUserParams struct {
+	FromAddress     string `json:"from_address"`
+	TransactionType string `json:"transaction_type"`
+}
+
+func (q *Queries) ListDeploysByUser(ctx context.Context, arg ListDeploysByUserParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listDeploysByUser, arg.FromAddress, arg.TransactionType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Transaction{}
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.TransactionType,
+			&i.FromAddress,
+			&i.ToAddress,
+			&i.TransferData,
+			&i.HashValue,
+			&i.CreateTime,
+			&i.UpdateTime,
+			&i.DeleteTime,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTransactionsByToken = `-- name: ListTransactionsByToken :many
+SELECT id, transaction_type, from_address, to_address, transfer_data, hash_value, create_time, update_time, delete_time, is_active FROM transactions
+WHERE 
+    transfer_data = $1
+ORDER BY id
+`
+
+func (q *Queries) ListTransactionsByToken(ctx context.Context, transferData string) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listTransactionsByToken, transferData)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Transaction{}
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.TransactionType,
+			&i.FromAddress,
+			&i.ToAddress,
+			&i.TransferData,
+			&i.HashValue,
+			&i.CreateTime,
+			&i.UpdateTime,
+			&i.DeleteTime,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTransactionsByTypeFrom = `-- name: ListTransactionsByTypeFrom :many
+SELECT id, transaction_type, from_address, to_address, transfer_data, hash_value, create_time, update_time, delete_time, is_active FROM transactions
+WHERE 
+    from_address = $1 AND transaction_type = $2
+ORDER BY id
+`
+
+type ListTransactionsByTypeFromParams struct {
+	FromAddress     string `json:"from_address"`
+	TransactionType string `json:"transaction_type"`
+}
+
+func (q *Queries) ListTransactionsByTypeFrom(ctx context.Context, arg ListTransactionsByTypeFromParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listTransactionsByTypeFrom, arg.FromAddress, arg.TransactionType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Transaction{}
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.TransactionType,
+			&i.FromAddress,
+			&i.ToAddress,
+			&i.TransferData,
+			&i.HashValue,
+			&i.CreateTime,
+			&i.UpdateTime,
+			&i.DeleteTime,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTransactionsByTypeTo = `-- name: ListTransactionsByTypeTo :many
+SELECT id, transaction_type, from_address, to_address, transfer_data, hash_value, create_time, update_time, delete_time, is_active FROM transactions
+WHERE 
+    to_address = $1 AND transaction_type = $2
+ORDER BY id
+`
+
+type ListTransactionsByTypeToParams struct {
+	ToAddress       string `json:"to_address"`
+	TransactionType string `json:"transaction_type"`
+}
+
+func (q *Queries) ListTransactionsByTypeTo(ctx context.Context, arg ListTransactionsByTypeToParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listTransactionsByTypeTo, arg.ToAddress, arg.TransactionType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Transaction{}
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.TransactionType,
+			&i.FromAddress,
+			&i.ToAddress,
+			&i.TransferData,
+			&i.HashValue,
+			&i.CreateTime,
+			&i.UpdateTime,
+			&i.DeleteTime,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTransfersByTimeFrom = `-- name: ListTransfersByTimeFrom :many
+SELECT id, transaction_type, from_address, to_address, transfer_data, hash_value, create_time, update_time, delete_time, is_active FROM transactions
+WHERE 
+    create_time >= $1 AND create_time <= $2 AND transaction_type = $3 AND from_address = $4
+ORDER BY id
+`
+
+type ListTransfersByTimeFromParams struct {
+	CreateTime      time.Time `json:"create_time"`
+	CreateTime_2    time.Time `json:"create_time_2"`
+	TransactionType string    `json:"transaction_type"`
+	FromAddress     string    `json:"from_address"`
+}
+
+func (q *Queries) ListTransfersByTimeFrom(ctx context.Context, arg ListTransfersByTimeFromParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listTransfersByTimeFrom,
+		arg.CreateTime,
+		arg.CreateTime_2,
+		arg.TransactionType,
+		arg.FromAddress,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Transaction{}
+	for rows.Next() {
+		var i Transaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.TransactionType,
+			&i.FromAddress,
+			&i.ToAddress,
+			&i.TransferData,
+			&i.HashValue,
+			&i.CreateTime,
+			&i.UpdateTime,
+			&i.DeleteTime,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTransfersByTimeTo = `-- name: ListTransfersByTimeTo :many
+SELECT id, transaction_type, from_address, to_address, transfer_data, hash_value, create_time, update_time, delete_time, is_active FROM transactions
+WHERE 
+    create_time >= $1 AND create_time <= $2 AND transaction_type = $3 AND to_address = $4
+ORDER BY id
+`
+
+type ListTransfersByTimeToParams struct {
+	CreateTime      time.Time `json:"create_time"`
+	CreateTime_2    time.Time `json:"create_time_2"`
+	TransactionType string    `json:"transaction_type"`
+	ToAddress       string    `json:"to_address"`
+}
+
+func (q *Queries) ListTransfersByTimeTo(ctx context.Context, arg ListTransfersByTimeToParams) ([]Transaction, error) {
+	rows, err := q.db.QueryContext(ctx, listTransfersByTimeTo,
+		arg.CreateTime,
+		arg.CreateTime_2,
+		arg.TransactionType,
+		arg.ToAddress,
+	)
 	if err != nil {
 		return nil, err
 	}

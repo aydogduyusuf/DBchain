@@ -2,7 +2,7 @@ postgres:
 	docker run --name postgres -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=yuay -d postgres:14-alpine
 
 createdb:
-	docker exec -it postgres createdb --username=root --owner=root DBchain
+	docker exec -it postgres createdb --username=root --owner=root --encoding=UTF-8 DBchain 
 
 dropdb:
 	docker exec -it postgres dropdb DBchain
@@ -31,4 +31,10 @@ migrate1:
 mockdb:
 	mockgen -destination db/mock/store.go github.com/aydogduyusuf/DBchain/db/sqlc Store
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc migrateup1 migratedown1 migrateinit migrate1 mockdb
+server:
+	go run main.go
+
+abigen:
+	abigen --abi ./build/NonVotedCapped.abi --bin ./build/NonVotedCapped.bin --pkg blockchain --out NonVotedCapped.go
+
+.PHONY: postgres createdb dropdb migrateup migratedown sqlc migrateup1 migratedown1 migrateinit migrate1 mockdb abigen server

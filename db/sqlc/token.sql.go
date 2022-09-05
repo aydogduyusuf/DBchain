@@ -7,8 +7,6 @@ package db
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 const createToken = `-- name: CreateToken :one
@@ -16,18 +14,20 @@ INSERT INTO tokens (
   u_id,
   token_name,
   symbol,
-  supply
+  supply,
+  contract_address
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3, $4, $5
 )
 RETURNING id, u_id, token_name, symbol, supply, contract_address, create_time, update_time, delete_time, is_active
 `
 
 type CreateTokenParams struct {
-	UID       uuid.UUID `json:"u_id"`
-	TokenName string    `json:"token_name"`
-	Symbol    string    `json:"symbol"`
-	Supply    int64     `json:"supply"`
+	UID             int64  `json:"u_id"`
+	TokenName       string `json:"token_name"`
+	Symbol          string `json:"symbol"`
+	Supply          int64  `json:"supply"`
+	ContractAddress string `json:"contract_address"`
 }
 
 func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) (Token, error) {
@@ -36,6 +36,7 @@ func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) (Token
 		arg.TokenName,
 		arg.Symbol,
 		arg.Supply,
+		arg.ContractAddress,
 	)
 	var i Token
 	err := row.Scan(
@@ -59,7 +60,7 @@ SET is_active = false, delete_time = current_timestamp
 WHERE id = $1
 `
 
-func (q *Queries) DeleteToken(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) DeleteToken(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, deleteToken, id)
 	return err
 }
@@ -69,8 +70,60 @@ SELECT id, u_id, token_name, symbol, supply, contract_address, create_time, upda
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetToken(ctx context.Context, id uuid.UUID) (Token, error) {
+func (q *Queries) GetToken(ctx context.Context, id int64) (Token, error) {
 	row := q.db.QueryRowContext(ctx, getToken, id)
+	var i Token
+	err := row.Scan(
+		&i.ID,
+		&i.UID,
+		&i.TokenName,
+		&i.Symbol,
+		&i.Supply,
+		&i.ContractAddress,
+		&i.CreateTime,
+		&i.UpdateTime,
+		&i.DeleteTime,
+		&i.IsActive,
+	)
+	return i, err
+}
+
+const getTokenByAddress = `-- name: GetTokenByAddress :one
+SELECT id, u_id, token_name, symbol, supply, contract_address, create_time, update_time, delete_time, is_active FROM tokens
+WHERE contract_address = $1 LIMIT 1
+`
+
+func (q *Queries) GetTokenByAddress(ctx context.Context, contractAddress string) (Token, error) {
+	row := q.db.QueryRowContext(ctx, getTokenByAddress, contractAddress)
+	var i Token
+	err := row.Scan(
+		&i.ID,
+		&i.UID,
+		&i.TokenName,
+		&i.Symbol,
+		&i.Supply,
+		&i.ContractAddress,
+		&i.CreateTime,
+		&i.UpdateTime,
+		&i.DeleteTime,
+		&i.IsActive,
+	)
+	return i, err
+}
+
+const getTokenByUIDAndContract = `-- name: GetTokenByUIDAndContract :one
+SELECT id, u_id, token_name, symbol, supply, contract_address, create_time, update_time, delete_time, is_active FROM tokens
+WHERE u_id = $1 AND contract_address = $2 
+LIMIT 1
+`
+
+type GetTokenByUIDAndContractParams struct {
+	UID             int64  `json:"u_id"`
+	ContractAddress string `json:"contract_address"`
+}
+
+func (q *Queries) GetTokenByUIDAndContract(ctx context.Context, arg GetTokenByUIDAndContractParams) (Token, error) {
+	row := q.db.QueryRowContext(ctx, getTokenByUIDAndContract, arg.UID, arg.ContractAddress)
 	var i Token
 	err := row.Scan(
 		&i.ID,
@@ -93,7 +146,7 @@ WHERE id = $1 LIMIT 1
 FOR NO KEY UPDATE
 `
 
-func (q *Queries) GetTokenForUpdate(ctx context.Context, id uuid.UUID) (Token, error) {
+func (q *Queries) GetTokenForUpdate(ctx context.Context, id int64) (Token, error) {
 	row := q.db.QueryRowContext(ctx, getTokenForUpdate, id)
 	var i Token
 	err := row.Scan(
@@ -117,7 +170,7 @@ WHERE u_id = $1
 ORDER BY id
 `
 
-func (q *Queries) ListTokens(ctx context.Context, uID uuid.UUID) ([]Token, error) {
+func (q *Queries) ListTokens(ctx context.Context, uID int64) ([]Token, error) {
 	rows, err := q.db.QueryContext(ctx, listTokens, uID)
 	if err != nil {
 		return nil, err
@@ -159,8 +212,8 @@ RETURNING id, u_id, token_name, symbol, supply, contract_address, create_time, u
 `
 
 type UpdateTokenParams struct {
-	ID              uuid.UUID `json:"id"`
-	ContractAddress string    `json:"contract_address"`
+	ID              int64  `json:"id"`
+	ContractAddress string `json:"contract_address"`
 }
 
 func (q *Queries) UpdateToken(ctx context.Context, arg UpdateTokenParams) (Token, error) {

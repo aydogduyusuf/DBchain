@@ -7,8 +7,6 @@ package db
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -66,7 +64,7 @@ SET is_active = false AND delete_time = current_timestamp
 WHERE id = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, deleteUser, id)
 	return err
 }
@@ -100,7 +98,7 @@ SELECT id, username, hashed_password, full_name, email, wallet_public_address, w
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetUserFromID(ctx context.Context, id uuid.UUID) (User, error) {
+func (q *Queries) GetUserFromID(ctx context.Context, id int64) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserFromID, id)
 	var i User
 	err := row.Scan(

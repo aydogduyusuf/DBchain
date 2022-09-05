@@ -47,13 +47,20 @@ func (server *Server) setupRouter() {
 
 	router.POST("/users", server.createUser)
 	router.POST("/users/login", server.loginUser)
+	
+	authRoutes.GET("/users/private", server.getPrivate)
+	authRoutes.GET("/users/balance", server.getBalance)
 
 	authRoutes.POST("/tokens", server.deployToken)
+	authRoutes.POST("/tokens/transfer", server.transferToken)
 
 	authRoutes.GET("/tokens/:id", server.getToken)
 	authRoutes.GET("/tokens", server.listTokens)
+	authRoutes.GET("/tokens/balance", server.getTokenBalance)
 	
-	authRoutes.GET("/transactions", server.getTransaction)
+	authRoutes.GET("/transactions/transfers", server.getTransfers)
+	authRoutes.GET("/transactions/deploys", server.getDeploys)
+	//authRoutes.GET("/transactions", server.getTransactions)
 
 	router.POST("/access_refresh_tokens/renew_access", server.renewAccessToken)
 	

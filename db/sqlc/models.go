@@ -6,12 +6,10 @@ package db
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Session struct {
-	ID           uuid.UUID `json:"id"`
+	ID           int64     `json:"id"`
 	Username     string    `json:"username"`
 	RefreshToken string    `json:"refresh_token"`
 	UserAgent    string    `json:"user_agent"`
@@ -22,8 +20,8 @@ type Session struct {
 }
 
 type Token struct {
-	ID              uuid.UUID `json:"id"`
-	UID             uuid.UUID `json:"u_id"`
+	ID              int64     `json:"id"`
+	UID             int64     `json:"u_id"`
 	TokenName       string    `json:"token_name"`
 	Symbol          string    `json:"symbol"`
 	Supply          int64     `json:"supply"`
@@ -35,8 +33,8 @@ type Token struct {
 }
 
 type Transaction struct {
-	ID              uuid.UUID `json:"id"`
-	TransactionType string    `json:"transaction_type"`
+	ID              int64  `json:"id"`
+	TransactionType string `json:"transaction_type"`
 	// from wallet address
 	FromAddress string `json:"from_address"`
 	// to wallet address, null when contract deploy
@@ -50,7 +48,7 @@ type Transaction struct {
 }
 
 type User struct {
-	ID                   uuid.UUID `json:"id"`
+	ID                   int64     `json:"id"`
 	Username             string    `json:"username"`
 	HashedPassword       string    `json:"hashed_password"`
 	FullName             string    `json:"full_name"`

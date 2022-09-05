@@ -32,7 +32,7 @@ func main() {
 
 	server, err := api.NewServer(config, store)
 	if err != nil {
-		log.Fatal("can not create server")
+		log.Fatal("can not create server", err)
 	}
 
 	

@@ -1,5 +1,5 @@
 CREATE TABLE "users" (
-  "id" uuid PRIMARY KEY,
+  "id" bigserial PRIMARY KEY,
   "username" varchar UNIQUE NOT NULL,
   "hashed_password" varchar UNIQUE NOT NULL,
   "full_name" varchar NOT NULL,
@@ -13,8 +13,8 @@ CREATE TABLE "users" (
 );
 
 CREATE TABLE "tokens" (
-  "id" uuid PRIMARY KEY,
-  "u_id" uuid NOT NULL,
+  "id" bigserial PRIMARY KEY,
+  "u_id" bigserial NOT NULL,
   "token_name" varchar NOT NULL,
   "symbol" varchar NOT NULL,
   "supply" bigint NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE "tokens" (
 );
 
 CREATE TABLE "transactions" (
-  "id" uuid PRIMARY KEY,
+  "id" bigserial PRIMARY KEY,
   "transaction_type" varchar NOT NULL,
   "from_address" varchar NOT NULL,
   "to_address" varchar NOT NULL,

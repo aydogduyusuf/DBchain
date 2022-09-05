@@ -4,7 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/aydogduyusuf/DBchain/util"
+	//"github.com/google/uuid"
 )
 
 // Types of errors returned by VerifyToken function
@@ -13,7 +14,7 @@ var	ErrExpiredToken = errors.New("token has expired")
 
 // Payload contains the payload data of the token
 type Payload struct {
-	ID		 	uuid.UUID 	`json:"id"`
+	ID		 	int64 		`json:"id"`
 	Username 	string 		`json:"username"`
 	IssuedAt 	time.Time 	`json:"issued_at"`
 	ExpiredAt 	time.Time 	`json:"expired_at"`
@@ -22,13 +23,13 @@ type Payload struct {
 
 // NewPayload creates a new token payload with a specific username and duration
 func NewPayload(username string, duration time.Duration) (*Payload, error) {
-	tokenID, err := uuid.NewRandom()
+	/* tokenID, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
-	}
+	} */
 
 	payload := &Payload{
-		ID: tokenID,
+		ID: util.RandomInt(0,1000),
 		Username: username,
 		IssuedAt: time.Now(),
 		ExpiredAt: time.Now().Add(duration),

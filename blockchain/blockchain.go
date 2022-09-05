@@ -74,8 +74,7 @@ func NewTransactOpts(context context.Context , privateKey *ecdsa.PrivateKey) (*b
 	return txOps
 }
 
-
-func SetTransactOpts(client *ethclient.Client, address common.Address, context context.Context, txOps *bind.TransactOpts, value *big.Int, gasLimit uint64, gasPrice *big.Int) {
+func SetTransactOpts(address common.Address, context context.Context, txOps *bind.TransactOpts, value *big.Int, gasLimit uint64, gasPrice *big.Int) {
 	nonce, err := client.PendingNonceAt(context, address)
 	if err != nil {
 		log.Fatal(err)
@@ -92,7 +91,6 @@ func SetTransactOpts(client *ethclient.Client, address common.Address, context c
 	} else {
 		txOps.GasPrice = gasPrice
 	}
-
 }
 
 func NewCallOpts(pending bool , from common.Address, blockNumber *big.Int, context context.Context) (*bind.CallOpts){
@@ -105,7 +103,7 @@ func NewCallOpts(pending bool , from common.Address, blockNumber *big.Int, conte
 	return callOps
 }
 
-func DeployContract(address common.Address, privateKey *ecdsa.PrivateKey, name string, symbol string, supply *big.Int) (common.Address, *Blockhain) {
+func DeployContract(address common.Address, privateKey *ecdsa.PrivateKey, name string, symbol string, supply *big.Int) (common.Address, *Blockchain) {
 	nonce, err := client.PendingNonceAt(context.Background(), address)
     if err != nil {
         log.Fatal(err)
@@ -129,10 +127,39 @@ func DeployContract(address common.Address, privateKey *ecdsa.PrivateKey, name s
     auth.GasLimit = uint64(300000) // in units
     auth.GasPrice = gasPrice
 
-	contractAddress, _, instance, err := DeployBlockhain(auth, client, name, symbol, address, supply)
+	contractAddress, _, instance, err := DeployBlockchain(auth, client, name, symbol, address, supply)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	return contractAddress, instance
+}
+
+func TransferContract(ctx context.Context, privateKey *ecdsa.PrivateKey, address common.Address, to common.Address, amount *big.Int) (common.Hash, error) {
+	txOps := NewTransactOpts(ctx, privateKey)
+	SetTransactOpts(address, ctx, txOps, amount, uint64(300000), big.NewInt(0))
+	blockInstance, err := NewBlockchain(address, client)
+	if err != nil {
+		log.Fatal("blockchain instance error: ",err)
+	}
+
+	tx, err := blockInstance.Transfer(txOps, to, amount)
+
+	return tx.Hash(), err
+}
+
+func GetBalance(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error){
+	return client.BalanceAt(ctx, account, blockNumber)
+}
+
+func GetTokenBalance(ctx context.Context, address common.Address) (*big.Int, error){
+	callOps := bind.CallOpts{
+		Pending: true,
+		From: address,
+	}
+	blockInstance, err := NewBlockchain(address, client)
+	if err != nil {
+		log.Fatal("blockchain instance error: ",err)
+	}
+	return blockInstance.BalanceOf(&callOps, address)
 }

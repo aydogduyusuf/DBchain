@@ -13,6 +13,7 @@ type Config struct {
 	TokenSymmetricKey 	string 		  `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
+	AvalancheFuji		string			`mapstructure:"AVALANCHE_FUJI"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

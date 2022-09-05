@@ -3,15 +3,25 @@ INSERT INTO tokens (
   u_id,
   token_name,
   symbol,
-  supply
+  supply,
+  contract_address
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3, $4, $5
 )
 RETURNING *;
 
 -- name: GetToken :one
 SELECT * FROM tokens
 WHERE id = $1 LIMIT 1;
+
+-- name: GetTokenByAddress :one
+SELECT * FROM tokens
+WHERE contract_address = $1 LIMIT 1;
+
+-- name: GetTokenByUIDAndContract :one
+SELECT * FROM tokens
+WHERE u_id = $1 AND contract_address = $2 
+LIMIT 1;
 
 -- name: GetTokenForUpdate :one
 SELECT * FROM tokens

@@ -10,7 +10,6 @@ import (
 
 	db "github.com/aydogduyusuf/DBchain/db/sqlc"
 	gomock "github.com/golang/mock/gomock"
-	uuid "github.com/google/uuid"
 )
 
 // MockStore is a mock of Store interface.
@@ -97,7 +96,7 @@ func (mr *MockStoreMockRecorder) CreateUser(arg0, arg1 interface{}) *gomock.Call
 }
 
 // DeleteToken mocks base method.
-func (m *MockStore) DeleteToken(arg0 context.Context, arg1 uuid.UUID) error {
+func (m *MockStore) DeleteToken(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteToken", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -111,7 +110,7 @@ func (mr *MockStoreMockRecorder) DeleteToken(arg0, arg1 interface{}) *gomock.Cal
 }
 
 // DeleteTransaction mocks base method.
-func (m *MockStore) DeleteTransaction(arg0 context.Context, arg1 uuid.UUID) error {
+func (m *MockStore) DeleteTransaction(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteTransaction", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -125,7 +124,7 @@ func (mr *MockStoreMockRecorder) DeleteTransaction(arg0, arg1 interface{}) *gomo
 }
 
 // DeleteUser mocks base method.
-func (m *MockStore) DeleteUser(arg0 context.Context, arg1 uuid.UUID) error {
+func (m *MockStore) DeleteUser(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUser", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -139,7 +138,7 @@ func (mr *MockStoreMockRecorder) DeleteUser(arg0, arg1 interface{}) *gomock.Call
 }
 
 // GetSession mocks base method.
-func (m *MockStore) GetSession(arg0 context.Context, arg1 uuid.UUID) (db.Session, error) {
+func (m *MockStore) GetSession(arg0 context.Context, arg1 int64) (db.Session, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSession", arg0, arg1)
 	ret0, _ := ret[0].(db.Session)
@@ -154,7 +153,7 @@ func (mr *MockStoreMockRecorder) GetSession(arg0, arg1 interface{}) *gomock.Call
 }
 
 // GetToken mocks base method.
-func (m *MockStore) GetToken(arg0 context.Context, arg1 uuid.UUID) (db.Token, error) {
+func (m *MockStore) GetToken(arg0 context.Context, arg1 int64) (db.Token, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetToken", arg0, arg1)
 	ret0, _ := ret[0].(db.Token)
@@ -168,8 +167,38 @@ func (mr *MockStoreMockRecorder) GetToken(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetToken", reflect.TypeOf((*MockStore)(nil).GetToken), arg0, arg1)
 }
 
+// GetTokenByAddress mocks base method.
+func (m *MockStore) GetTokenByAddress(arg0 context.Context, arg1 string) (db.Token, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTokenByAddress", arg0, arg1)
+	ret0, _ := ret[0].(db.Token)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTokenByAddress indicates an expected call of GetTokenByAddress.
+func (mr *MockStoreMockRecorder) GetTokenByAddress(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTokenByAddress", reflect.TypeOf((*MockStore)(nil).GetTokenByAddress), arg0, arg1)
+}
+
+// GetTokenByUIDAndContract mocks base method.
+func (m *MockStore) GetTokenByUIDAndContract(arg0 context.Context, arg1 db.GetTokenByUIDAndContractParams) (db.Token, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTokenByUIDAndContract", arg0, arg1)
+	ret0, _ := ret[0].(db.Token)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTokenByUIDAndContract indicates an expected call of GetTokenByUIDAndContract.
+func (mr *MockStoreMockRecorder) GetTokenByUIDAndContract(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTokenByUIDAndContract", reflect.TypeOf((*MockStore)(nil).GetTokenByUIDAndContract), arg0, arg1)
+}
+
 // GetTokenForUpdate mocks base method.
-func (m *MockStore) GetTokenForUpdate(arg0 context.Context, arg1 uuid.UUID) (db.Token, error) {
+func (m *MockStore) GetTokenForUpdate(arg0 context.Context, arg1 int64) (db.Token, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTokenForUpdate", arg0, arg1)
 	ret0, _ := ret[0].(db.Token)
@@ -184,7 +213,7 @@ func (mr *MockStoreMockRecorder) GetTokenForUpdate(arg0, arg1 interface{}) *gomo
 }
 
 // GetTransaction mocks base method.
-func (m *MockStore) GetTransaction(arg0 context.Context, arg1 uuid.UUID) (db.Transaction, error) {
+func (m *MockStore) GetTransaction(arg0 context.Context, arg1 int64) (db.Transaction, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTransaction", arg0, arg1)
 	ret0, _ := ret[0].(db.Transaction)
@@ -196,6 +225,21 @@ func (m *MockStore) GetTransaction(arg0 context.Context, arg1 uuid.UUID) (db.Tra
 func (mr *MockStoreMockRecorder) GetTransaction(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransaction", reflect.TypeOf((*MockStore)(nil).GetTransaction), arg0, arg1)
+}
+
+// GetTransactionByAddress mocks base method.
+func (m *MockStore) GetTransactionByAddress(arg0 context.Context, arg1 string) (db.Transaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTransactionByAddress", arg0, arg1)
+	ret0, _ := ret[0].(db.Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTransactionByAddress indicates an expected call of GetTransactionByAddress.
+func (mr *MockStoreMockRecorder) GetTransactionByAddress(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionByAddress", reflect.TypeOf((*MockStore)(nil).GetTransactionByAddress), arg0, arg1)
 }
 
 // GetUser mocks base method.
@@ -214,7 +258,7 @@ func (mr *MockStoreMockRecorder) GetUser(arg0, arg1 interface{}) *gomock.Call {
 }
 
 // GetUserFromID mocks base method.
-func (m *MockStore) GetUserFromID(arg0 context.Context, arg1 uuid.UUID) (db.User, error) {
+func (m *MockStore) GetUserFromID(arg0 context.Context, arg1 int64) (db.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserFromID", arg0, arg1)
 	ret0, _ := ret[0].(db.User)
@@ -228,8 +272,38 @@ func (mr *MockStoreMockRecorder) GetUserFromID(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserFromID", reflect.TypeOf((*MockStore)(nil).GetUserFromID), arg0, arg1)
 }
 
+// ListDeploysByTime mocks base method.
+func (m *MockStore) ListDeploysByTime(arg0 context.Context, arg1 db.ListDeploysByTimeParams) ([]db.Transaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDeploysByTime", arg0, arg1)
+	ret0, _ := ret[0].([]db.Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDeploysByTime indicates an expected call of ListDeploysByTime.
+func (mr *MockStoreMockRecorder) ListDeploysByTime(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDeploysByTime", reflect.TypeOf((*MockStore)(nil).ListDeploysByTime), arg0, arg1)
+}
+
+// ListDeploysByUser mocks base method.
+func (m *MockStore) ListDeploysByUser(arg0 context.Context, arg1 db.ListDeploysByUserParams) ([]db.Transaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDeploysByUser", arg0, arg1)
+	ret0, _ := ret[0].([]db.Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDeploysByUser indicates an expected call of ListDeploysByUser.
+func (mr *MockStoreMockRecorder) ListDeploysByUser(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDeploysByUser", reflect.TypeOf((*MockStore)(nil).ListDeploysByUser), arg0, arg1)
+}
+
 // ListTokens mocks base method.
-func (m *MockStore) ListTokens(arg0 context.Context, arg1 uuid.UUID) ([]db.Token, error) {
+func (m *MockStore) ListTokens(arg0 context.Context, arg1 int64) ([]db.Token, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListTokens", arg0, arg1)
 	ret0, _ := ret[0].([]db.Token)
@@ -243,19 +317,79 @@ func (mr *MockStoreMockRecorder) ListTokens(arg0, arg1 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTokens", reflect.TypeOf((*MockStore)(nil).ListTokens), arg0, arg1)
 }
 
-// ListTransactions mocks base method.
-func (m *MockStore) ListTransactions(arg0 context.Context, arg1 db.ListTransactionsParams) ([]db.Transaction, error) {
+// ListTransactionsByToken mocks base method.
+func (m *MockStore) ListTransactionsByToken(arg0 context.Context, arg1 string) ([]db.Transaction, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTransactions", arg0, arg1)
+	ret := m.ctrl.Call(m, "ListTransactionsByToken", arg0, arg1)
 	ret0, _ := ret[0].([]db.Transaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListTransactions indicates an expected call of ListTransactions.
-func (mr *MockStoreMockRecorder) ListTransactions(arg0, arg1 interface{}) *gomock.Call {
+// ListTransactionsByToken indicates an expected call of ListTransactionsByToken.
+func (mr *MockStoreMockRecorder) ListTransactionsByToken(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransactions", reflect.TypeOf((*MockStore)(nil).ListTransactions), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransactionsByToken", reflect.TypeOf((*MockStore)(nil).ListTransactionsByToken), arg0, arg1)
+}
+
+// ListTransactionsByTypeFrom mocks base method.
+func (m *MockStore) ListTransactionsByTypeFrom(arg0 context.Context, arg1 db.ListTransactionsByTypeFromParams) ([]db.Transaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListTransactionsByTypeFrom", arg0, arg1)
+	ret0, _ := ret[0].([]db.Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListTransactionsByTypeFrom indicates an expected call of ListTransactionsByTypeFrom.
+func (mr *MockStoreMockRecorder) ListTransactionsByTypeFrom(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransactionsByTypeFrom", reflect.TypeOf((*MockStore)(nil).ListTransactionsByTypeFrom), arg0, arg1)
+}
+
+// ListTransactionsByTypeTo mocks base method.
+func (m *MockStore) ListTransactionsByTypeTo(arg0 context.Context, arg1 db.ListTransactionsByTypeToParams) ([]db.Transaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListTransactionsByTypeTo", arg0, arg1)
+	ret0, _ := ret[0].([]db.Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListTransactionsByTypeTo indicates an expected call of ListTransactionsByTypeTo.
+func (mr *MockStoreMockRecorder) ListTransactionsByTypeTo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransactionsByTypeTo", reflect.TypeOf((*MockStore)(nil).ListTransactionsByTypeTo), arg0, arg1)
+}
+
+// ListTransfersByTimeFrom mocks base method.
+func (m *MockStore) ListTransfersByTimeFrom(arg0 context.Context, arg1 db.ListTransfersByTimeFromParams) ([]db.Transaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListTransfersByTimeFrom", arg0, arg1)
+	ret0, _ := ret[0].([]db.Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListTransfersByTimeFrom indicates an expected call of ListTransfersByTimeFrom.
+func (mr *MockStoreMockRecorder) ListTransfersByTimeFrom(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransfersByTimeFrom", reflect.TypeOf((*MockStore)(nil).ListTransfersByTimeFrom), arg0, arg1)
+}
+
+// ListTransfersByTimeTo mocks base method.
+func (m *MockStore) ListTransfersByTimeTo(arg0 context.Context, arg1 db.ListTransfersByTimeToParams) ([]db.Transaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListTransfersByTimeTo", arg0, arg1)
+	ret0, _ := ret[0].([]db.Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListTransfersByTimeTo indicates an expected call of ListTransfersByTimeTo.
+func (mr *MockStoreMockRecorder) ListTransfersByTimeTo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTransfersByTimeTo", reflect.TypeOf((*MockStore)(nil).ListTransfersByTimeTo), arg0, arg1)
 }
 
 // TransferTx mocks base method.

@@ -8,8 +8,6 @@ package db
 import (
 	"context"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const createSession = `-- name: CreateSession :one
@@ -28,7 +26,7 @@ RETURNING id, username, refresh_token, user_agent, client_ip, is_blocked, expire
 `
 
 type CreateSessionParams struct {
-	ID           uuid.UUID `json:"id"`
+	ID           int64     `json:"id"`
 	Username     string    `json:"username"`
 	RefreshToken string    `json:"refresh_token"`
 	UserAgent    string    `json:"user_agent"`
@@ -66,7 +64,7 @@ SELECT id, username, refresh_token, user_agent, client_ip, is_blocked, expires_a
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (Session, error) {
+func (q *Queries) GetSession(ctx context.Context, id int64) (Session, error) {
 	row := q.db.QueryRowContext(ctx, getSession, id)
 	var i Session
 	err := row.Scan(
