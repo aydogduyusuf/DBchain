@@ -2,11 +2,15 @@ package api
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"net/http"
-	"strconv"
+
+	//"strconv"
 
 	"github.com/aydogduyusuf/DBchain/access_refresh_tokens"
 	"github.com/aydogduyusuf/DBchain/blockchain"
@@ -15,18 +19,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
+
 	//"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
 type deployTokenRequest struct {
-	name			string		`json:"name"`
-	symbol			string		`json:"symbol"`
-	supply			int64		`json:"supply"`
+	Name   string `json:"name"`
+	Symbol string `json:"symbol"`
+	Supply int64  `json:"supply"`
 }
 
 type deployTokenResponse struct {
-	TokenAddress		string		`json:"token_address"`
+	TokenAddress string `json:"token_address"`
 }
 
 func (server *Server) deployToken(ctx *gin.Context) {
@@ -53,20 +58,20 @@ func (server *Server) deployToken(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	contractAddress, _ := blockchain.DeployContract(common.HexToAddress(user.WalletPublicAddress), privateKeyECDSA, req.name, req.symbol, big.NewInt(req.supply))
+	contractAddress, _ := blockchain.DeployContract(common.HexToAddress(user.WalletPublicAddress), privateKeyECDSA, req.Name, req.Symbol, big.NewInt(req.Supply))
 
 	arg := db.CreateTokenParams{
-		UID: 				user.ID,
-		TokenName: 			req.name,
-		Symbol: 			req.symbol,
-		Supply: 			req.supply,
-		ContractAddress: 	contractAddress.String(),
+		UID:             user.ID,
+		TokenName:       req.Name,
+		Symbol:          req.Symbol,
+		Supply:          req.Supply,
+		ContractAddress: contractAddress.String(),
 	}
 	_, err = server.store.CreateToken(ctx, arg)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Code.Name() {
-			case "foreign_key_violation", "unique_violation" : 
+			case "foreign_key_violation", "unique_violation":
 				ctx.JSON(http.StatusForbidden, errorResponse(err))
 			}
 		}
@@ -75,13 +80,13 @@ func (server *Server) deployToken(ctx *gin.Context) {
 	}
 	txArg := db.CreateTransactionParams{
 		TransactionType: "deploy",
-		FromAddress: user.WalletPublicAddress,
-		ToAddress: "",
-		TransferData: contractAddress.String(),
-		HashValue: contractAddress.Hash().String(),
+		FromAddress:     user.WalletPublicAddress,
+		ToAddress:       "",
+		TransferData:    contractAddress.String(),
+		HashValue:       contractAddress.Hash().String(),
 	}
 	_, err = server.store.CreateTransaction(ctx, txArg)
-	if err != nil{
+	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, err)
 		return
 	}
@@ -92,30 +97,33 @@ func (server *Server) deployToken(ctx *gin.Context) {
 }
 
 type transferTokenRequest struct {
-	ContractAddress			string		`json:"contract_address" binding:"required, min=24"`
-	ToAddress				string		`json:"to_address" binding:"required, min=24"`
-	Amount					string		`json:"amount"`
+	ContractAddress string `json:"contract_address"`
+	ToAddress       string `json:"to_address"`
+	Amount          int64  `json:"amount"`
 }
 
 func (server *Server) transferToken(ctx *gin.Context) {
-	var req transferTokenRequest
-	if err := ctx.ShouldBindUri(&req); err != nil {
+	x, _ := ioutil.ReadAll(ctx.Request.Body)
+	values := string(x)
+	var data transferTokenRequest
+	err := json.Unmarshal([]byte(values), &data)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return 
+		return
 	}
 
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*access_refresh_tokens.Payload)
 	user, err := server.store.GetUser(ctx, authPayload.Username)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	
-	arg := db.GetTokenByUIDAndContractParams{
+
+	/* arg := db.GetTokenByUIDAndContractParams{
 		UID: user.ID,
 		ContractAddress: req.ContractAddress,
-	} 
-	
+	}
+
 	token, err := server.store.GetTokenByUIDAndContract(ctx, arg)
 	if token.ContractAddress != req.ContractAddress {
 		ctx.JSON(http.StatusBadRequest, "wrong token address")
@@ -123,13 +131,13 @@ func (server *Server) transferToken(ctx *gin.Context) {
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Code.Name() {
-			case "foreign_key_violation", "unique_violation" : 
+			case "foreign_key_violation", "unique_violation" :
 				ctx.JSON(http.StatusForbidden, errorResponse(err))
 			}
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
-	}
+	} */
 
 	privateKey, err := util.Decrypt(user.WalletPrivateAddress, secretKey)
 	if err != nil {
@@ -140,15 +148,17 @@ func (server *Server) transferToken(ctx *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
-	contractAddress := common.HexToAddress(req.ContractAddress)
-	toAddress := common.HexToAddress(req.ToAddress)
-	amount, err := strconv.ParseInt(req.Amount, 10, 64)
-	if err != nil {
-		log.Fatal("type conversion error", err)
-	}
 
-	hash, err := blockchain.TransferContract(ctx, privateKeyECDSA, contractAddress, toAddress, big.NewInt(amount))
+	contractAddress := common.HexToAddress(data.ContractAddress)
+	toAddress := common.HexToAddress(data.ToAddress)
+
+	fmt.Println("privateKeyECDSA: ", privateKeyECDSA)
+	fmt.Println("contractAddress:", contractAddress)
+	fmt.Println("toAddress: ", toAddress)
+	fmt.Println("big.NewInt(req.Amount): ", big.NewInt(data.Amount))
+
+	hash, err := blockchain.TransferContract(privateKeyECDSA, common.HexToAddress(user.WalletPublicAddress), contractAddress, toAddress, big.NewInt(data.Amount))
+
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, err)
 		return
@@ -156,25 +166,29 @@ func (server *Server) transferToken(ctx *gin.Context) {
 
 	txArg := db.CreateTransactionParams{
 		TransactionType: "transfer",
-		FromAddress: user.WalletPublicAddress,
-		ToAddress: req.ToAddress,
-		TransferData: "amount:"+req.Amount+"token:"+req.ContractAddress,
-		HashValue: hash.String(),
+		FromAddress:     user.WalletPublicAddress,
+		ToAddress:       data.ToAddress,
+		TransferData:    "amount:" + string(rune(data.Amount)) + "token:" + data.ContractAddress,
+		HashValue:       hash.String(),
 	}
-	server.store.CreateTransaction(ctx, txArg)
+	_, err = server.store.CreateTransaction(ctx, txArg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
 
 	ctx.JSON(http.StatusOK, "token transferred")
 }
 
 type getTokenRequest struct {
-	ID 	int64 	`uri:"id" binding:"required,min=1"`
+	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
 func (server *Server) getToken(ctx *gin.Context) {
 	var req getTokenRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return 
+		return
 	}
 
 	token, err := server.store.GetToken(ctx, req.ID)
@@ -197,12 +211,16 @@ func (server *Server) getToken(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, token)
 }
 
-
 func (server *Server) listTokens(ctx *gin.Context) {
-	
+
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*access_refresh_tokens.Payload)
-	
-	tokens, err := server.store.ListTokens(ctx, authPayload.ID)
+
+	user, err := server.store.GetUser(ctx, authPayload.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	tokens, err := server.store.ListTokens(ctx, user.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -212,18 +230,30 @@ func (server *Server) listTokens(ctx *gin.Context) {
 }
 
 type getTokenBalanceRequest struct {
-	TokenAddress		string			`json:token_address`
+	TokenAddress string `json:"tokenaddress"`
+}
+
+type getTokenBalanceResponse struct {
+	Balance *big.Int `json:"balance"`
 }
 
 func (server *Server) getTokenBalance(ctx *gin.Context) {
-	var req getTokenBalanceRequest
-	if err := ctx.ShouldBindUri(&req); err != nil {
+
+	x, _ := ioutil.ReadAll(ctx.Request.Body)
+	values := string(x)
+	//fmt.Printf("%s", values)
+	var data getTokenBalanceRequest
+	err := json.Unmarshal([]byte(values), &data)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return 
+		return
 	}
 
+	fmt.Println("data.tokenaddress:", data.TokenAddress)
+
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*access_refresh_tokens.Payload)
-	token, err := server.store.GetTokenByAddress(ctx, req.TokenAddress)
+
+	_, err = server.store.GetTokenByAddress(ctx, data.TokenAddress)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -233,18 +263,21 @@ func (server *Server) getTokenBalance(ctx *gin.Context) {
 		return
 	}
 
-	if token.UID != authPayload.ID {
-		err := errors.New("token does not belong to authenticated user")
-		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
-		return
-	}
-	
-	balance, err := blockchain.GetTokenBalance(ctx, common.HexToAddress(token.ContractAddress))
+	_, err = server.store.GetUser(ctx, authPayload.Username)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, err)
+		fmt.Println("get user err")
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, getBalanceResponse{
+
+	fmt.Println("common.HexToAddress(data.TokenAddress)", common.HexToAddress(data.TokenAddress))
+	balance, err := blockchain.GetTokenBalance(common.HexToAddress(data.TokenAddress))
+	if err != nil {
+		fmt.Println("get token err")
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, getTokenBalanceResponse{
 		Balance: balance,
 	})
 

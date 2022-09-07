@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+
 	//"go/types"
 	"log"
 	"math/big"
@@ -16,7 +17,7 @@ import (
 
 var client *ethclient.Client
 
-func InitNetwork(networkRPC string) (*ethclient.Client) {
+func InitNetwork(networkRPC string) *ethclient.Client {
 	var err error
 	client, err = ethclient.Dial(networkRPC)
 	if err != nil {
@@ -61,9 +62,9 @@ func ImportWallet(privateKey string) (common.Address, *ecdsa.PrivateKey) {
 	return address, importedPrivateKey
 }
 
-func NewTransactOpts(context context.Context , privateKey *ecdsa.PrivateKey) (*bind.TransactOpts){
+func NewTransactOpts(privateKey *ecdsa.PrivateKey) *bind.TransactOpts {
 	//fetch networkID
-	networkID, err := client.ChainID(context)
+	networkID, err := client.ChainID(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -74,73 +75,71 @@ func NewTransactOpts(context context.Context , privateKey *ecdsa.PrivateKey) (*b
 	return txOps
 }
 
-func SetTransactOpts(address common.Address, context context.Context, txOps *bind.TransactOpts, value *big.Int, gasLimit uint64, gasPrice *big.Int) {
-	nonce, err := client.PendingNonceAt(context, address)
+func SetTransactOpts(address common.Address, txOps *bind.TransactOpts, value *big.Int, gasLimit uint64) {
+	nonce, err := client.PendingNonceAt(context.Background(), address)
 	if err != nil {
 		log.Fatal(err)
 	}
 	txOps.Nonce = big.NewInt(int64(nonce))
-	txOps.Value = value
+	//txOps.Value = value
 	txOps.GasLimit = gasLimit
-	// if given gasPrice is 0, suggested gasPrice will be used
-	if gasPrice == big.NewInt(0) {
-		txOps.GasPrice, err = client.SuggestGasPrice(context)
-		if err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		txOps.GasPrice = gasPrice
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Fatal(err)
 	}
+	txOps.GasPrice = gasPrice
 }
 
-func NewCallOpts(pending bool , from common.Address, blockNumber *big.Int, context context.Context) (*bind.CallOpts){
+func NewCallOpts(pending bool, from common.Address, blockNumber *big.Int, context context.Context) *bind.CallOpts {
 	callOps := &bind.CallOpts{
-		Pending: pending,
-		From: from,
+		Pending:     pending,
+		From:        from,
 		BlockNumber: blockNumber,
-		Context: context,
+		Context:     context,
 	}
 	return callOps
 }
 
 func DeployContract(address common.Address, privateKey *ecdsa.PrivateKey, name string, symbol string, supply *big.Int) (common.Address, *Blockchain) {
 	nonce, err := client.PendingNonceAt(context.Background(), address)
-    if err != nil {
-        log.Fatal(err)
-    }
-
-	gasPrice, err := client.SuggestGasPrice(context.Background())
-    if err != nil {
-        log.Fatal(err)
-    }
-	chainID, err := client.ChainID(context.Background())
-	if err != nil {
-        log.Fatal(err)
-    }
-    auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-	if err != nil {
-        log.Fatal(err)
-    }
-	auth.From = address
-    auth.Nonce = big.NewInt(int64(nonce))
-    auth.Value = big.NewInt(0)     // in wei
-    auth.GasLimit = uint64(300000) // in units
-    auth.GasPrice = gasPrice
-
-	contractAddress, _, instance, err := DeployBlockchain(auth, client, name, symbol, address, supply)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	auth.From = address
+	auth.Nonce = big.NewInt(int64(nonce))
+	//auth.Value = big.NewInt(0)     // in wei
+	auth.GasLimit = uint64(2100000) // in units
+	auth.GasPrice = gasPrice
+
+	contractAddress, tx, instance, err := DeployBlockchain(auth, client, name, symbol, address, supply)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(tx.Hash().Hex())
+
 	return contractAddress, instance
 }
 
-func TransferContract(ctx context.Context, privateKey *ecdsa.PrivateKey, address common.Address, to common.Address, amount *big.Int) (common.Hash, error) {
-	txOps := NewTransactOpts(ctx, privateKey)
-	SetTransactOpts(address, ctx, txOps, amount, uint64(300000), big.NewInt(0))
+func TransferContract(privateKey *ecdsa.PrivateKey, public common.Address, address common.Address, to common.Address, amount *big.Int) (common.Hash, error) {
+	txOps := NewTransactOpts(privateKey)
+	SetTransactOpts(public, txOps, amount, uint64(2100000))
+	txOps.Context = nil
 	blockInstance, err := NewBlockchain(address, client)
 	if err != nil {
-		log.Fatal("blockchain instance error: ",err)
+		log.Fatal("blockchain instance error: ", err)
 	}
 
 	tx, err := blockInstance.Transfer(txOps, to, amount)
@@ -148,18 +147,24 @@ func TransferContract(ctx context.Context, privateKey *ecdsa.PrivateKey, address
 	return tx.Hash(), err
 }
 
-func GetBalance(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error){
+func GetBalance(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error) {
 	return client.BalanceAt(ctx, account, blockNumber)
 }
 
-func GetTokenBalance(ctx context.Context, address common.Address) (*big.Int, error){
-	callOps := bind.CallOpts{
-		Pending: true,
-		From: address,
+func GetTokenBalance(address common.Address) (*big.Int, error) {
+	callOps := &bind.CallOpts{
+		Pending:     true,
+		From:        address,
+		BlockNumber: nil,
+		Context:     nil,
 	}
 	blockInstance, err := NewBlockchain(address, client)
 	if err != nil {
-		log.Fatal("blockchain instance error: ",err)
+		log.Fatal("blockchain instance error: ", err)
 	}
-	return blockInstance.BalanceOf(&callOps, address)
+	owad, err := blockInstance.Owner(callOps)
+	if err != nil {
+		log.Fatal("blockchain owner error: ", err)
+	}
+	return blockInstance.BalanceOf(callOps, owad)
 }
