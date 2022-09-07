@@ -151,11 +151,11 @@ func (server *Server) transferToken(ctx *gin.Context) {
 
 	contractAddress := common.HexToAddress(data.ContractAddress)
 	toAddress := common.HexToAddress(data.ToAddress)
-
+/* 
 	fmt.Println("privateKeyECDSA: ", privateKeyECDSA)
 	fmt.Println("contractAddress:", contractAddress)
 	fmt.Println("toAddress: ", toAddress)
-	fmt.Println("big.NewInt(req.Amount): ", big.NewInt(data.Amount))
+	fmt.Println("big.NewInt(req.Amount): ", big.NewInt(data.Amount)) */
 
 	hash, err := blockchain.TransferContract(privateKeyECDSA, common.HexToAddress(user.WalletPublicAddress), contractAddress, toAddress, big.NewInt(data.Amount))
 
@@ -241,15 +241,12 @@ func (server *Server) getTokenBalance(ctx *gin.Context) {
 
 	x, _ := ioutil.ReadAll(ctx.Request.Body)
 	values := string(x)
-	//fmt.Printf("%s", values)
 	var data getTokenBalanceRequest
 	err := json.Unmarshal([]byte(values), &data)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-
-	fmt.Println("data.tokenaddress:", data.TokenAddress)
 
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*access_refresh_tokens.Payload)
 
@@ -265,12 +262,10 @@ func (server *Server) getTokenBalance(ctx *gin.Context) {
 
 	_, err = server.store.GetUser(ctx, authPayload.Username)
 	if err != nil {
-		fmt.Println("get user err")
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	fmt.Println("common.HexToAddress(data.TokenAddress)", common.HexToAddress(data.TokenAddress))
 	balance, err := blockchain.GetTokenBalance(common.HexToAddress(data.TokenAddress))
 	if err != nil {
 		fmt.Println("get token err")
